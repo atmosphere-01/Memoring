@@ -2,4 +2,30 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Design palette -->
+    <color name="paper">#FBF8F3</color>
+    <color name="paper_2">#F2EDE3</color>
+    <color name="ink">#232323</color>
+    <color name="ink_soft">#6B6660</color>
+    <color name="coral">#FF5A36</color>
+    <color name="coral_soft">#FFEFEA</color>
+    <color name="green">#2BAE66</color>
+    <color name="green_soft">#EAF8F0</color>
+    <color name="amber">#F5A623</color>
+    <color name="amber_soft">#FCEFD3</color>
+    <color name="line">#1A232323</color>
+    <color name="dark_card">#232323</color>
+    <color name="track">#4A4642</color>
+    <color name="card_pink">#FBE3DC</color>
+    <color name="card_green">#DDF0E4</color>
+
+    <!-- My page -->
+    <color name="peach">#FFF0EA</color>
+    <color name="mint">#EAF7F1</color>
+    <color name="amber_tint">#FFF5E5</color>
+    <color name="blue">#2278D4</color>
+    <color name="bar_green">#B9DCC9</color>
+    <color name="coral_border">#3DFF5A36</color>
+    <color name="amber_text">#9B6517</color>
 </resources>
