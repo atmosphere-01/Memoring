@@ -20,6 +20,22 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".ui.FlashcardActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.CategorySelectActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.QuizActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.MemorizedActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

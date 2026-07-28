@@ -1,5 +1,6 @@
 package com.example.memoring
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.widget.LinearLayout
@@ -8,8 +9,11 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.memoring.ui.CategorySelectActivity
 import com.example.memoring.ui.DummyData
+import com.example.memoring.ui.FlashcardActivity
 import com.example.memoring.ui.LearningStats
+import com.example.memoring.ui.MemorizedActivity
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,6 +32,18 @@ class MainActivity : AppCompatActivity() {
         LearningStats.registerVisit(this)
 
         buildReviewList()
+
+        findViewById<LinearLayout>(R.id.cardFlashcard).setOnClickListener {
+            startActivity(Intent(this, FlashcardActivity::class.java))
+        }
+        // 퀴즈는 카테고리 선택을 거쳐야 시작 (카테고리 선택 필수)
+        val toQuiz = { startActivity(Intent(this, CategorySelectActivity::class.java)) }
+        findViewById<LinearLayout>(R.id.cardQuiz).setOnClickListener { toQuiz() }
+        findViewById<LinearLayout>(R.id.navQuiz).setOnClickListener { toQuiz() }
+
+        findViewById<LinearLayout>(R.id.cardMemorized).setOnClickListener {
+            startActivity(Intent(this, MemorizedActivity::class.java))
+        }
     }
 
     override fun onResume() {
