@@ -28,4 +28,13 @@
     <color name="bar_green">#B9DCC9</color>
     <color name="coral_border">#3DFF5A36</color>
     <color name="amber_text">#9B6517</color>
+
+    <color name="paper_card">#FBFAF6</color>
+    <color name="accent">#C99A2E</color>
+    <color name="accent_ink">#8A6A1C</color>
+    <color name="teal">#2C6E63</color>
+    <color name="teal_bg">#E3EEEA</color>
+    <color name="rust">#B15A34</color>
+    <color name="rust_bg">#F3E6DD</color>
+    <color name="line_color">#1F22261F</color>
 </resources>

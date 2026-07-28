@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/paper">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:id="@+id/btn_back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="← 뒤로"
+            android:textSize="15sp"
+            android:textColor="@color/ink"
+            android:padding="4dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginBottom="16dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="20dp">
+
+            <TextView
+                android:id="@+id/tv_word"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="26sp"
+                android:textStyle="bold"
+                android:textColor="@color/ink" />
+
+            <TextView
+                android:id="@+id/tv_favorite"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="☆"
+                android:textSize="26sp"
+                android:clickable="true"
+                android:focusable="true" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="뜻"
+            android:textSize="11sp"
+            android:textColor="@color/ink_soft"
+            android:layout_marginBottom="4dp" />
+        <EditText
+            android:id="@+id/et_meaning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_rounded_card"
+            android:padding="14dp"
+            android:textSize="15sp"
+            android:textColor="@color/ink"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="품사"
+            android:textSize="11sp"
+            android:textColor="@color/ink_soft"
+            android:layout_marginBottom="4dp" />
+        <EditText
+            android:id="@+id/et_part_of_speech"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_rounded_card"
+            android:padding="14dp"
+            android:textSize="15sp"
+            android:textColor="@color/ink"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="예문"
+            android:textSize="11sp"
+            android:textColor="@color/ink_soft"
+            android:layout_marginBottom="4dp" />
+        <EditText
+            android:id="@+id/et_example"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_rounded_card"
+            android:padding="14dp"
+            android:textSize="15sp"
+            android:textColor="@color/ink"
+            android:layout_marginBottom="20dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="암기 상태"
+            android:textSize="11sp"
+            android:textColor="@color/ink_soft"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="24dp">
+
+            <TextView
+                android:id="@+id/status_unlearned"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="미학습"
+                android:textAlignment="center"
+                android:padding="10dp"
+                android:background="@drawable/bg_rounded_pill"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginEnd="6dp" />
+
+            <TextView
+                android:id="@+id/status_review"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="복습 필요"
+                android:textAlignment="center"
+                android:padding="10dp"
+                android:background="@drawable/bg_rounded_pill"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginEnd="6dp" />
+
+            <TextView
+                android:id="@+id/status_known"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="암기 완료"
+                android:textAlignment="center"
+                android:padding="10dp"
+                android:background="@drawable/bg_rounded_pill"
+                android:clickable="true"
+                android:focusable="true" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btn_save"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="저장"
+            android:background="@drawable/bg_rounded_button"
+            android:textColor="@color/paper"
+            android:layout_marginBottom="10dp" />
+
+        <Button
+            android:id="@+id/btn_delete"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="삭제"
+            android:background="@drawable/bg_rounded_pill"
+            android:textColor="@color/rust" />
+
+    </LinearLayout>
+</ScrollView>
