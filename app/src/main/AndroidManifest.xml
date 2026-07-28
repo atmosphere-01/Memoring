@@ -36,6 +36,10 @@
         <activity
             android:name=".ui.MemorizedActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".ui.MyPageActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

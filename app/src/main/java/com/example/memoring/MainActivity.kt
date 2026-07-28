@@ -10,10 +10,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.memoring.ui.CategorySelectActivity
+import com.example.memoring.ui.DeckStore
 import com.example.memoring.ui.DummyData
 import com.example.memoring.ui.FlashcardActivity
 import com.example.memoring.ui.LearningStats
 import com.example.memoring.ui.MemorizedActivity
+import com.example.memoring.ui.MyPageActivity
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,10 +46,14 @@ class MainActivity : AppCompatActivity() {
         findViewById<LinearLayout>(R.id.cardMemorized).setOnClickListener {
             startActivity(Intent(this, MemorizedActivity::class.java))
         }
+        findViewById<LinearLayout>(R.id.navMy).setOnClickListener {
+            startActivity(Intent(this, MyPageActivity::class.java))
+        }
     }
 
     override fun onResume() {
         super.onResume()
+        // 퀴즈를 풀고 돌아오면 목표 진행도가 즉시 반영되도록 화면 갱신
         refreshGoal()
     }
 
@@ -64,6 +70,9 @@ class MainActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.goalSubtitle).text =
             if (done >= target) "오늘 목표 달성! 🎉" else "조금만 더 하면 목표 달성!"
 
+        // 전체 단어 = 등록된 단어장들의 단어 수 합계
+        findViewById<TextView>(R.id.totalWords).text =
+            DeckStore.decks(this).sumOf { it.count }.toString()
         // 암기 완료(퀴즈 정답 단어) / 복습 필요(오답·헷갈려요·모르겠어요) 개수 갱신
         findViewById<TextView>(R.id.memorizedCount).text =
             LearningStats.memorizedCount(this).toString()

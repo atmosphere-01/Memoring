@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- 이번 주 학습 막대그래프 -->
+    <style name="WeekDay">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="WeekTrack">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">44dp</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:gravity">bottom</item>
+        <item name="android:background">@drawable/bg_bar_track</item>
+    </style>
+
+    <style name="WeekBar">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">8dp</item>
+        <item name="android:background">@drawable/bg_bar_green</item>
+    </style>
+
+    <style name="WeekLabel">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">5dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">9sp</item>
+        <item name="android:textColor">@color/ink_soft</item>
+    </style>
+
+</resources>
