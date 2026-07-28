@@ -2,6 +2,12 @@ package com.example.memoring.data
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import com.example.memoring.data.dao.CategoryDao
+import com.example.memoring.data.dao.DailyDao
+import com.example.memoring.data.dao.QuizDao
+import com.example.memoring.data.dao.UserDao
+import com.example.memoring.data.dao.UserWordDao
+import com.example.memoring.data.dao.WordDao
 import com.example.memoring.data.entity.*
 
 @Database(
@@ -17,5 +23,10 @@ import com.example.memoring.data.entity.*
     version = 1
 )
 abstract class AppDatabase : RoomDatabase() {
-    // 팀원들이 필요한 DAO를 등록할 공간
+    abstract fun userDao(): UserDao
+    abstract fun categoryDao(): CategoryDao
+    abstract fun wordDao(): WordDao
+    abstract fun userWordDao(): UserWordDao
+    abstract fun dailyDao(): DailyDao
+    abstract fun quizDao(): QuizDao
 }

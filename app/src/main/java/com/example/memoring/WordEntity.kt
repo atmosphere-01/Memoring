@@ -18,10 +18,10 @@ import androidx.room.PrimaryKey
 data class WordEntity(
     @PrimaryKey(autoGenerate = true)
     val wordId: Int = 0,
-    val categoryId: Int,
-    val word: String,
-    val meaning: String,
-    val partOfSpeech: String? = null,
-    val exampleSentence: String? = null,
-    val createdAt: String
+    val categoryId: Int, //카테고리 ID
+    val word: String, //영단어
+    val meaning: String, // 뜻
+    val partOfSpeech: String? = null, //품사
+    val exampleSentence: String? = null, //예문
+    val createdAt: Long = System.currentTimeMillis() //등록날짜
 )
