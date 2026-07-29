@@ -15,6 +15,7 @@ import com.example.memoring.adapter.WordAdapter
 import com.example.memoring.data.WordListItem
 import com.example.memoring.databinding.ActivityWordListBinding
 import com.example.memoring.viewmodel.WordListViewModel
+import com.example.memoring.viewmodel.WordListViewModelFactory
 
 class WordListActivity : AppCompatActivity() {
 
@@ -76,8 +77,7 @@ class WordListActivity : AppCompatActivity() {
         binding = ActivityWordListBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        viewModel = ViewModelProvider(this)[WordListViewModel::class.java]
-
+        viewModel = ViewModelProvider(this, WordListViewModelFactory(this))[WordListViewModel::class.java]
         setupRecyclerView()
         setupCategoryChips()
         setupSearch()

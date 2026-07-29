@@ -1,58 +1,95 @@
 package com.example.memoring.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.example.memoring.data.*
+import androidx.lifecycle.viewModelScope
+import com.example.memoring.data.AppDb
+import com.example.memoring.data.MemoringRepository
+import com.example.memoring.data.WordListItem
+import com.example.memoring.data.entity.WordEntity
+import com.example.memoring.domain.ClockDateProvider
+import kotlinx.coroutines.launch
+import com.example.memoring.data.CategoryItem
+import com.example.memoring.data.ALL_CATEGORY_ID
+import com.example.memoring.data.CURRENT_USER_ID
 
-class WordListViewModel : ViewModel() {
+class WordListViewModel(context: Context) : ViewModel() {
 
-    private var allWords = dummyWords
+    private val repository = MemoringRepository(AppDb.get(context), ClockDateProvider())
 
-    private val _categories = MutableLiveData(dummyCategories)
+    private var allWords: List<WordListItem> = emptyList()
+
+    private val _categories = MutableLiveData<List<CategoryItem>>(emptyList())
     val categories: LiveData<List<CategoryItem>> get() = _categories
 
-    private val _selectedCategoryId = MutableLiveData(ALL_CATEGORY_ID)
-    private val _searchQuery = MutableLiveData("")
-
-    private val _filteredWords = MutableLiveData<List<WordListItem>>()
+    private val _filteredWords = MutableLiveData<List<WordListItem>>(emptyList())
     val filteredWords: LiveData<List<WordListItem>> get() = _filteredWords
 
+    private var selectedCategoryId = ALL_CATEGORY_ID
+    private var searchQuery = ""
+
     init {
-        updateFilteredWords()
+        loadCategories()
+        loadWords()
     }
 
-    private fun updateFilteredWords() {
-        val catId = _selectedCategoryId.value ?: ALL_CATEGORY_ID
-        val query = _searchQuery.value ?: ""
+    private fun loadCategories() {
+        viewModelScope.launch {
+            val cats = repository.getCategories(CURRENT_USER_ID)
+            val items = listOf(CategoryItem(ALL_CATEGORY_ID, "전체")) +
+                    cats.map { CategoryItem(it.categoryId, it.categoryName) }
+            _categories.value = items
+        }
+    }
+
+    private fun loadWords() {
+        viewModelScope.launch {
+            allWords = repository.getWordsWithStatus(CURRENT_USER_ID, null)
+            applyFilter()
+        }
+    }
+
+    private fun applyFilter() {
         _filteredWords.value = allWords.filter { w ->
-            val matchesCategory = catId == ALL_CATEGORY_ID || w.categoryId == catId
-            val matchesQuery = query.isBlank() ||
-                    w.word.contains(query, ignoreCase = true) ||
-                    w.meaning.contains(query, ignoreCase = true)
+            val matchesCategory = selectedCategoryId == ALL_CATEGORY_ID || w.categoryId == selectedCategoryId
+            val matchesQuery = searchQuery.isBlank() ||
+                    w.word.contains(searchQuery, ignoreCase = true) ||
+                    w.meaning.contains(searchQuery, ignoreCase = true)
             matchesCategory && matchesQuery
         }
     }
 
     fun onSearchQueryChange(query: String) {
-        _searchQuery.value = query
-        updateFilteredWords()
+        searchQuery = query
+        applyFilter()
     }
 
     fun onCategorySelect(categoryId: Int) {
-        _selectedCategoryId.value = categoryId
-        updateFilteredWords()
+        selectedCategoryId = categoryId
+        applyFilter()
     }
 
     fun toggleFavorite(wordId: Int) {
-        // 더미 리스트라 지금은 즐겨찾기 토글이 필터링 결과에만 즉시 반영됨
-        _filteredWords.value = _filteredWords.value?.map {
-            if (it.wordId == wordId) it.copy(isFavorite = !it.isFavorite) else it
+        val word = allWords.find { it.wordId == wordId } ?: return
+        viewModelScope.launch {
+            repository.toggleFavorite(CURRENT_USER_ID, wordId, !word.isFavorite)
+            loadWords()
         }
     }
+
     fun addWord(newWord: WordListItem) {
-        allWords = allWords + newWord
-        updateFilteredWords()
+        // WordAddActivity에서 이미 저장 처리하므로 여기선 목록만 새로고침
+        loadWords()
+    }
+
+    fun deleteWord(wordId: Int) {
+        val word = allWords.find { it.wordId == wordId } ?: return
+        viewModelScope.launch {
+            repository.deleteWordById(CURRENT_USER_ID, wordId, word.categoryId)
+            loadWords()
+        }
     }
 
     fun updateWord(
@@ -63,22 +100,12 @@ class WordListViewModel : ViewModel() {
         isFavorite: Boolean,
         memorizationStatus: String
     ) {
-        allWords = allWords.map {
-            if (it.wordId == wordId) {
-                it.copy(
-                    meaning = meaning,
-                    partOfSpeech = partOfSpeech,
-                    exampleSentence = example,
-                    isFavorite = isFavorite,
-                    memorizationStatus = memorizationStatus
-                )
-            } else it
+        val word = allWords.find { it.wordId == wordId } ?: return
+        viewModelScope.launch {
+            repository.updateWordFields(wordId, word.categoryId, meaning, partOfSpeech, example)
+            repository.toggleFavorite(CURRENT_USER_ID, wordId, isFavorite)
+            repository.updateMemorizationStatus(CURRENT_USER_ID, wordId, memorizationStatus)
+            loadWords()
         }
-        updateFilteredWords()
-    }
-
-    fun deleteWord(wordId: Int) {
-        allWords = allWords.filter { it.wordId != wordId }
-        updateFilteredWords()
     }
 }
