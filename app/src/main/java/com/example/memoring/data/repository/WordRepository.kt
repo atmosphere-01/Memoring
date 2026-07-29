@@ -55,18 +55,29 @@ class WordRepository(
                 if (!assetMeaning.isNullOrEmpty()) {
                     finalMeaning = assetMeaning
                 } else {
-                    //Asset에도 없을 경우, MyMemory API 호출
-                    try {
-                        val translateResponse = ApiClient.myMemoryApi.safeTranslateText(
+                    //Asset에도 없을 경우 1차: MyMemory API 호출
+                    finalMeaning = try {
+                        ApiClient.myMemoryApi.safeTranslateText(
                             text = cleanWord,
                             langPair = "en|ko",
                             email = userEmail
-                        )
-                        finalMeaning = translateResponse.responseData?.translatedText ?: ""
+                        ).responseData?.translatedText
                     } catch (e: Exception) {
                         e.printStackTrace()
-                        finalMeaning = ""
+                        null
                     }
+
+                    //2차 백업: MyMemory 실패/빈값이면 Google Translate (API 키 필요)
+                    if (finalMeaning.isNullOrBlank()) {
+                        finalMeaning = try {
+                            ApiClient.googleTranslateApi.safeTranslateText(cleanWord, "ko")
+                                .data?.translations?.firstOrNull()?.translatedText
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            null
+                        }
+                    }
+                    if (finalMeaning.isNullOrBlank()) finalMeaning = ""
                 }
             }
 

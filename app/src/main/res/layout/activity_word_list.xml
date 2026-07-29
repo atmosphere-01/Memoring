@@ -7,6 +7,19 @@
     android:background="@color/paper"
     android:padding="16dp">
 
+    <TextView
+        android:id="@+id/btn_back"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:gravity="center"
+        android:text="←"
+        android:textColor="@color/ink"
+        android:textSize="22sp"
+        android:layout_marginBottom="4dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackgroundBorderless" />
+
     <EditText
         android:id="@+id/et_search"
         android:layout_width="match_parent"
