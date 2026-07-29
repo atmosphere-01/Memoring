@@ -34,8 +34,8 @@ class WordAddActivity : AppCompatActivity() {
             val partOfSpeech = binding.etPartOfSpeech.text.toString().trim()
             val example = binding.etExample.text.toString().trim()
 
-            if (word.isEmpty() || meaning.isEmpty()) {
-                binding.tvError.text = "영어 단어와 뜻은 꼭 입력해주세요"
+            if (word.isEmpty()) {
+                binding.tvError.text = "영어 단어는 꼭 입력해주세요 (뜻을 비우면 자동 번역돼요)"
                 binding.tvError.visibility = android.view.View.VISIBLE
                 return@setOnClickListener
             }

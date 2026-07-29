@@ -15,9 +15,25 @@
         android:paddingBottom="8dp">
 
         <TextView
+            android:id="@+id/btnBack"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:gravity="center"
+            android:text="←"
+            android:textColor="@color/ink"
+            android:textSize="22sp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless" />
+
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_toEndOf="@id/btnBack"
             android:layout_centerVertical="true"
+            android:layout_marginStart="6dp"
             android:text="마이페이지"
             android:textStyle="bold"
             android:textColor="@color/ink"
@@ -89,7 +105,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
-                        android:text="시우님"
+                        android:text="Guest"
                         android:textStyle="bold"
                         android:textColor="@color/white"
                         android:textSize="24sp" />
@@ -206,9 +222,10 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:orientation="horizontal"
-                    android:gravity="center"
+                    android:gravity="center_vertical|start"
                     android:background="@drawable/bg_white_card"
-                    android:paddingVertical="16dp">
+                    android:paddingVertical="16dp"
+                    android:paddingStart="18dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -249,9 +266,10 @@
                     android:layout_weight="1"
                     android:layout_marginStart="10dp"
                     android:orientation="horizontal"
-                    android:gravity="center"
+                    android:gravity="center_vertical|start"
                     android:background="@drawable/bg_white_card"
-                    android:paddingVertical="16dp">
+                    android:paddingVertical="16dp"
+                    android:paddingStart="18dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -292,9 +310,10 @@
                     android:layout_weight="1"
                     android:layout_marginStart="10dp"
                     android:orientation="horizontal"
-                    android:gravity="center"
+                    android:gravity="center_vertical|start"
                     android:background="@drawable/bg_white_card"
-                    android:paddingVertical="16dp">
+                    android:paddingVertical="16dp"
+                    android:paddingStart="18dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -348,11 +367,12 @@
                     android:textSize="16sp" />
 
                 <TextView
+                    android:id="@+id/weekTotal"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
                     android:layout_centerVertical="true"
-                    android:text="총 47개 학습"
+                    android:text="총 0개 학습"
                     android:textColor="@color/ink_soft"
                     android:textSize="11sp" />
             </RelativeLayout>
@@ -372,9 +392,10 @@
                     android:layout_marginBottom="14dp">
 
                     <TextView
+                        android:id="@+id/goalPercentText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="목표의 78% 달성"
+                        android:text="목표의 0% 달성"
                         android:textStyle="bold"
                         android:textColor="@color/ink"
                         android:textSize="14sp" />
@@ -385,71 +406,21 @@
                         android:layout_weight="1" />
 
                     <TextView
+                        android:id="@+id/vsLastWeekText"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="지난주보다 +12%"
+                        android:text=""
                         android:textColor="@color/green"
                         android:textStyle="bold"
                         android:textSize="11sp" />
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/weekContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:baselineAligned="false">
-
-                    <LinearLayout style="@style/WeekDay">
-                        <LinearLayout style="@style/WeekTrack">
-                            <View style="@style/WeekBar" android:layout_height="18dp" />
-                        </LinearLayout>
-                        <TextView style="@style/WeekLabel" android:text="월" />
-                    </LinearLayout>
-
-                    <LinearLayout style="@style/WeekDay" android:layout_marginStart="7dp">
-                        <LinearLayout style="@style/WeekTrack">
-                            <View style="@style/WeekBar" android:layout_height="30dp" />
-                        </LinearLayout>
-                        <TextView style="@style/WeekLabel" android:text="화" />
-                    </LinearLayout>
-
-                    <LinearLayout style="@style/WeekDay" android:layout_marginStart="7dp">
-                        <LinearLayout style="@style/WeekTrack">
-                            <View style="@style/WeekBar" android:layout_height="23dp" />
-                        </LinearLayout>
-                        <TextView style="@style/WeekLabel" android:text="수" />
-                    </LinearLayout>
-
-                    <LinearLayout style="@style/WeekDay" android:layout_marginStart="7dp">
-                        <LinearLayout style="@style/WeekTrack">
-                            <View style="@style/WeekBar" android:layout_height="39dp" />
-                        </LinearLayout>
-                        <TextView style="@style/WeekLabel" android:text="목" />
-                    </LinearLayout>
-
-                    <LinearLayout style="@style/WeekDay" android:layout_marginStart="7dp">
-                        <LinearLayout style="@style/WeekTrack">
-                            <View style="@style/WeekBar" android:layout_height="32dp"
-                                android:background="@drawable/bg_bar_coral" />
-                        </LinearLayout>
-                        <TextView style="@style/WeekLabel" android:text="금"
-                            android:textColor="@color/coral" android:textStyle="bold" />
-                    </LinearLayout>
-
-                    <LinearLayout style="@style/WeekDay" android:layout_marginStart="7dp">
-                        <LinearLayout style="@style/WeekTrack">
-                            <View style="@style/WeekBar" android:layout_height="8dp" />
-                        </LinearLayout>
-                        <TextView style="@style/WeekLabel" android:text="토" />
-                    </LinearLayout>
-
-                    <LinearLayout style="@style/WeekDay" android:layout_marginStart="7dp">
-                        <LinearLayout style="@style/WeekTrack">
-                            <View style="@style/WeekBar" android:layout_height="4dp" />
-                        </LinearLayout>
-                        <TextView style="@style/WeekLabel" android:text="일" />
-                    </LinearLayout>
-                </LinearLayout>
+                    android:baselineAligned="false" />
             </LinearLayout>
 
         </LinearLayout>
@@ -491,11 +462,14 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/navWord"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:gravity="center">
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true">
 
             <TextView
                 android:layout_width="wrap_content"

@@ -105,13 +105,23 @@ class FlashcardActivity : AppCompatActivity() {
         out.start()
     }
 
-    /** 다음 카드로 이동 (마지막이면 처음으로 순환) */
+    /** 다음 카드로 이동 (마지막 카드까지 끝나면 화면 종료) */
     private fun next(mood: String) {
-        // "헷갈려요/모르겠어요" 는 복습 필요 단어로 기록
-        if (mood == "헷갈려요" || mood == "모르겠어요") {
-            LearningStats.addReviewWord(this, cards[index].word)
+        val card = cards[index]
+        // 카드 1장 평가 = 오늘 학습량 1건
+        LearningStats.recordStudied(this)
+        when (mood) {
+            // "외웠어요" 는 암기 완료로 기록
+            "외웠어요" -> LearningStats.addMemorizedWord(this, card.word, card.meaning)
+            // "헷갈려요/모르겠어요" 는 복습 필요 단어로 기록 (뜻·상태와 함께)
+            "헷갈려요", "모르겠어요" -> LearningStats.addReviewWord(this, card.word, card.meaning, mood)
         }
-        index = (index + 1) % cards.size
+        if (index >= cards.size - 1) {
+            // 마지막 카드까지 봤으면 처음으로 돌아가지 않고 종료
+            finish()
+            return
+        }
+        index++
         bindCard()
     }
 }
