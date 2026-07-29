@@ -21,4 +21,7 @@ interface CategoryDao {
     //카테고리 수정
     @Update
     suspend fun updateCategory(category: CategoryEntity)
+
+    @Query("SELECT * FROM categories WHERE userId = :userId ORDER BY categoryId LIMIT 1")
+    suspend fun getFirst(userId: Int): CategoryEntity?
 }

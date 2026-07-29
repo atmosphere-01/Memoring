@@ -2,6 +2,24 @@ package com.example.memoring.data.dao
 
 import androidx.room.*
 import com.example.memoring.data.entity.WordEntity
+import kotlinx.coroutines.flow.Flow
+
+data class QuizCandidateRow(
+    val wordId: Int,
+    val categoryId: Int,
+    val word: String,
+    val meaning: String,
+    val memorizationStatus: String?,
+    val wrongCnt: Int?
+)
+
+data class WordStatisticsRow(
+    val total: Int,
+    val learned: Int,
+    val memorized: Int,
+    val review: Int,
+    val favorite: Int
+)
 
 //단어 데이터 관리
 @Dao
@@ -34,5 +52,27 @@ interface WordDao {
     // 💡 특정 카테고리에 이미 같은 단어가 있는지 확인
     @Query("SELECT EXISTS(SELECT 1 FROM words WHERE categoryId = :categoryId AND LOWER(word) = LOWER(:word))")
     suspend fun isWordExists(categoryId: Int, word: String): Boolean
+
+    @Query(
+        """SELECT w.wordId, w.categoryId, w.word, w.meaning, uw.memorizationStatus, uw.wrongCnt
+           FROM words w
+           JOIN categories c ON c.categoryId = w.categoryId
+           LEFT JOIN user_words uw ON uw.wordId = w.wordId AND uw.userId = :userId
+           WHERE c.userId = :userId AND (:categoryId IS NULL OR w.categoryId = :categoryId)"""
+    )
+    suspend fun getQuizCandidates(userId: Int, categoryId: Int?): List<QuizCandidateRow>
+
+    @Query(
+        """SELECT COUNT(w.wordId) total,
+           COALESCE(SUM(CASE WHEN uw.memorizationStatus IN ('UNKNOWN','CONFUSED','KNOWN') THEN 1 ELSE 0 END), 0) learned,
+           COALESCE(SUM(CASE WHEN uw.memorizationStatus = 'KNOWN' THEN 1 ELSE 0 END), 0) memorized,
+           COALESCE(SUM(CASE WHEN uw.memorizationStatus IN ('UNKNOWN','CONFUSED') OR (uw.memorizationStatus = 'KNOWN' AND uw.wrongCnt > 0) THEN 1 ELSE 0 END), 0) review,
+           COALESCE(SUM(CASE WHEN uw.isFavorite = 1 THEN 1 ELSE 0 END), 0) favorite
+           FROM words w
+           JOIN categories c ON c.categoryId = w.categoryId
+           LEFT JOIN user_words uw ON uw.wordId = w.wordId AND uw.userId = :userId
+           WHERE c.userId = :userId"""
+    )
+    fun observeStatistics(userId: Int): Flow<WordStatisticsRow>
 
 }
