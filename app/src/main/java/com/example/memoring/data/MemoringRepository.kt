@@ -131,4 +131,68 @@ class MemoringRepository(
     fun observeDaily(id: Int, date: String) = db.dailyDao().observe(id, date)
     fun observeDailyRange(id: Int, start: String, end: String) =
         db.dailyDao().observeRange(id, start, end)
+
+    suspend fun getWordsWithStatus(userId: Int, categoryId: Int?): List<com.example.memoring.data.WordListItem> {
+        val words = if (categoryId != null) {
+            db.wordDao().getWordsByCategory(categoryId)
+        } else {
+            db.categoryDao().getCategoriesByUserId(userId).flatMap {
+                db.wordDao().getWordsByCategory(it.categoryId)
+            }
+        }
+        return words.map { word ->
+            val userWord = db.userWordDao().get(userId, word.wordId)
+            com.example.memoring.data.WordListItem(
+                wordId = word.wordId,
+                word = word.word,
+                meaning = word.meaning,
+                partOfSpeech = word.partOfSpeech,
+                exampleSentence = word.exampleSentence,
+                categoryId = word.categoryId,
+                isFavorite = userWord?.isFavorite ?: false,
+                memorizationStatus = userWord?.memorizationStatus ?: "UNLEARNED"
+            )
+        }
+    }
+
+    suspend fun updateWordInfo(word: com.example.memoring.data.entity.WordEntity) =
+        db.wordDao().updateWord(word)
+
+    suspend fun deleteWordById(userId: Int, wordId: Int, categoryId: Int) {
+        val words = db.wordDao().getWordsByCategory(categoryId)
+        val target = words.find { it.wordId == wordId } ?: return
+        db.wordDao().deleteWord(target)
+    }
+
+    suspend fun toggleFavorite(userId: Int, wordId: Int, isFavorite: Boolean) {
+        val userWord = db.userWordDao().get(userId, wordId)
+        if (userWord != null) {
+            db.userWordDao().upsertUserWord(userWord.copy(isFavorite = isFavorite))
+        }
+    }
+
+    suspend fun getCategories(userId: Int) = db.categoryDao().getCategoriesByUserId(userId)
+
+    suspend fun updateWordFields(
+        wordId: Int,
+        categoryId: Int,
+        meaning: String,
+        partOfSpeech: String?,
+        example: String?
+    ) {
+        val words = db.wordDao().getWordsByCategory(categoryId)
+        val target = words.find { it.wordId == wordId } ?: return
+        val updated = target.copy(
+            meaning = meaning,
+            partOfSpeech = partOfSpeech,
+            exampleSentence = example
+        )
+        db.wordDao().updateWord(updated)
+    }
+
+    suspend fun updateMemorizationStatus(userId: Int, wordId: Int, status: String) {
+        db.userWordDao().updateStatus(userId, wordId, status)
+    }
+
+
 }

@@ -35,12 +35,12 @@ object AppDb {
             // 사용자 1명
             db.execSQL(
                 "INSERT INTO users (userId, username, continuousDay, createdAt) " +
-                    "VALUES (1, '시우', 0, '2026-07-29 00:00:00')"
+                        "VALUES (1, '시우', 0, '2026-07-29 00:00:00')"
             )
             // 카테고리 (userId=1 소유)
             db.execSQL(
                 "INSERT INTO categories (categoryId, userId, categoryName) VALUES " +
-                    "(1, 1, 'TOEIC'), (2, 1, '여행 영어'), (3, 1, '내 단어장')"
+                        "(1, 1, 'TOEIC'), (2, 1, '여행 영어'), (3, 1, '내 단어장')"
             )
             seedWordsFromCsv(db)
         }
@@ -55,7 +55,7 @@ object AppDb {
 
             val stmt = db.compileStatement(
                 "INSERT INTO words (categoryId, word, meaning, partOfSpeech, exampleSentence, createdAt) " +
-                    "VALUES (1, ?, ?, ?, NULL, 0)"
+                        "VALUES (1, ?, ?, ?, NULL, 0)"
             )
             db.beginTransaction()
             try {

@@ -5,33 +5,50 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AppCompatActivity
-import com.example.memoring.data.dummyCategories
+import androidx.lifecycle.lifecycleScope
+import com.example.memoring.data.AppDb
+import com.example.memoring.data.CategoryItem
+import com.example.memoring.data.CURRENT_USER_ID
+import com.example.memoring.data.util.CsvHelper
+import com.example.memoring.data.repository.WordRepository
 import com.example.memoring.databinding.ActivityWordAddBinding
+import kotlinx.coroutines.launch
 
 class WordAddActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityWordAddBinding
+    private lateinit var repository: WordRepository
+    private var categories: List<CategoryItem> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityWordAddBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // "전체"는 등록 대상 카테고리가 아니라서 제외
-        val selectableCategories = dummyCategories.filter { it.categoryId != 0 }
-        val categoryNames = selectableCategories.map { it.categoryName }
-
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, categoryNames)
-        binding.spinnerCategory.adapter = adapter
+        val db = AppDb.get(this)
+        repository = WordRepository(db.wordDao(), CsvHelper)
 
         binding.btnBack.setOnClickListener {
             finish()
         }
 
+        // 실제 DB에서 카테고리 불러오기
+        lifecycleScope.launch {
+            val cats = db.categoryDao().getCategoriesByUserId(CURRENT_USER_ID)
+            categories = cats.map { CategoryItem(it.categoryId, it.categoryName) }
+
+            val categoryNames = categories.map { it.categoryName }
+            val adapter = ArrayAdapter(
+                this@WordAddActivity,
+                android.R.layout.simple_spinner_dropdown_item,
+                categoryNames
+            )
+            binding.spinnerCategory.adapter = adapter
+        }
+
         binding.btnSave.setOnClickListener {
             val word = binding.etWord.text.toString().trim()
             val meaning = binding.etMeaning.text.toString().trim()
-            val partOfSpeech = binding.etPartOfSpeech.text.toString().trim()
             val example = binding.etExample.text.toString().trim()
 
             if (word.isEmpty()) {
@@ -40,18 +57,36 @@ class WordAddActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            val selectedIndex = binding.spinnerCategory.selectedItemPosition
-            val categoryId = selectableCategories[selectedIndex].categoryId
-
-            val resultIntent = Intent().apply {
-                putExtra("word", word)
-                putExtra("meaning", meaning)
-                putExtra("partOfSpeech", partOfSpeech)
-                putExtra("example", example)
-                putExtra("categoryId", categoryId)
+            if (categories.isEmpty()) {
+                binding.tvError.text = "카테고리를 먼저 만들어주세요"
+                binding.tvError.visibility = android.view.View.VISIBLE
+                return@setOnClickListener
             }
-            setResult(Activity.RESULT_OK, resultIntent)
-            finish()
+
+            val selectedIndex = binding.spinnerCategory.selectedItemPosition
+            val categoryId = categories[selectedIndex].categoryId
+
+            binding.btnSave.isEnabled = false
+
+            lifecycleScope.launch {
+                val success = repository.processAndSaveWord(
+                    englishWord = word,
+                    meaningInput = meaning,
+                    categoryId = categoryId
+                )
+
+                if (success) {
+                    val resultIntent = Intent().apply {
+                        putExtra("categoryId", categoryId)
+                    }
+                    setResult(Activity.RESULT_OK, resultIntent)
+                    finish()
+                } else {
+                    binding.btnSave.isEnabled = true
+                    binding.tvError.text = "이미 등록된 단어이거나 저장에 실패했습니다"
+                    binding.tvError.visibility = android.view.View.VISIBLE
+                }
+            }
         }
     }
 }

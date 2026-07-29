@@ -1,141 +1,159 @@
-package com.example.memoring.viewmodel
+package com.example.memoring
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.viewModelScope
-import com.example.memoring.data.*
-import com.example.memoring.data.entity.WordEntity
-import com.example.memoring.data.repository.WordRepository
-import com.example.memoring.data.util.CsvHelper
-import kotlinx.coroutines.launch
+import android.app.Activity
+import android.content.Intent
+import android.os.Bundle
+import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.widget.addTextChangedListener
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.core.content.ContextCompat
+import com.google.android.material.chip.Chip
+import com.example.memoring.adapter.WordAdapter
+import com.example.memoring.data.WordListItem
+import com.example.memoring.databinding.ActivityWordListBinding
+import com.example.memoring.data.ALL_CATEGORY_ID
+import com.example.memoring.viewmodel.WordListViewModel
+import com.example.memoring.viewmodel.WordListViewModelFactory
 
-class WordListViewModel(app: Application) : AndroidViewModel(app) {
+class WordListActivity : AppCompatActivity() {
 
-    private val wordDao = AppDb.get(app).wordDao()
-    private val repository = WordRepository(wordDao, CsvHelper)
-
-    private var allWords: List<WordListItem> = emptyList()
-
-    private val _categories = MutableLiveData(dummyCategories)
-    val categories: LiveData<List<CategoryItem>> get() = _categories
-
-    private val _selectedCategoryId = MutableLiveData(ALL_CATEGORY_ID)
-    private val _searchQuery = MutableLiveData("")
-
-    private val _filteredWords = MutableLiveData<List<WordListItem>>()
-    val filteredWords: LiveData<List<WordListItem>> get() = _filteredWords
-
-    init {
-        // 개발자 제공 CSV(있으면) 로드 — 없으면 addWord 시 번역 API로 대체
-        CsvHelper.loadAssetDictionary(app)
-        reload()
+    companion object {
+        /** 진입 시 미리 선택할 카테고리 (없으면 전체) */
+        const val EXTRA_CATEGORY_ID = "categoryId"
     }
 
-    /** DB에서 전체 단어를 다시 읽어온다 */
-    private fun reload() {
-        viewModelScope.launch {
-            allWords = wordDao.getAllWords().map { it.toListItem() }
-            updateFilteredWords()
+    private lateinit var binding: ActivityWordListBinding
+    private lateinit var viewModel: WordListViewModel
+
+    /** 진입 시 초기 선택 카테고리 (마이페이지 단어장 목록에서 넘어올 때 사용) */
+    private var initialCategoryId = ALL_CATEGORY_ID
+    private lateinit var adapter: WordAdapter
+
+    private val addWordLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data = result.data
+            val word = data?.getStringExtra("word") ?: return@registerForActivityResult
+            val meaning = data.getStringExtra("meaning")
+            val categoryId = data.getIntExtra("categoryId", 1)
+
+            // 뜻이 비어 있으면 번역/사전 API가 자동으로 채워 DB에 저장
+            viewModel.addWordViaApi(word, meaning?.ifBlank { null }, categoryId)
         }
     }
 
-    private fun updateFilteredWords() {
-        val catId = _selectedCategoryId.value ?: ALL_CATEGORY_ID
-        val query = _searchQuery.value ?: ""
-        _filteredWords.value = allWords.filter { w ->
-            val matchesCategory = catId == ALL_CATEGORY_ID || w.categoryId == catId
-            val matchesQuery = query.isBlank() ||
-                    w.word.contains(query, ignoreCase = true) ||
-                    w.meaning.contains(query, ignoreCase = true)
-            matchesCategory && matchesQuery
-        }
-    }
+    private val wordDetailLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data = result.data ?: return@registerForActivityResult
+            val wordId = data.getIntExtra("wordId", -1)
+            if (wordId == -1) return@registerForActivityResult
 
-    fun onSearchQueryChange(query: String) {
-        _searchQuery.value = query
-        updateFilteredWords()
-    }
-
-    fun onCategorySelect(categoryId: Int) {
-        _selectedCategoryId.value = categoryId
-        updateFilteredWords()
-    }
-
-    fun toggleFavorite(wordId: Int) {
-        // 즐겨찾기는 아직 화면 표시용(메모리)만 — UserWord 연동은 추후
-        allWords = allWords.map { if (it.wordId == wordId) it.copy(isFavorite = !it.isFavorite) else it }
-        updateFilteredWords()
-    }
-
-    /** 단어 추가: 번역/사전 API로 뜻·예문을 채워 DB에 저장 후 목록 갱신 */
-    fun addWordViaApi(englishWord: String, meaning: String?, categoryId: Int) {
-        viewModelScope.launch {
-            // 저장은 화면을 벗어나도 취소되지 않도록 앱 스코프에서 수행 (API가 느려도 유실 방지)
-            AppScope.io.launch {
-                repository.processAndSaveWord(englishWord, meaning, categoryId)
-            }.join()
-            reload()
-        }
-    }
-
-    fun updateWord(
-        wordId: Int,
-        meaning: String,
-        partOfSpeech: String?,
-        example: String?,
-        isFavorite: Boolean,
-        memorizationStatus: String
-    ) {
-        viewModelScope.launch {
-            allWords.firstOrNull { it.wordId == wordId }?.let { target ->
-                wordDao.updateWord(
-                    WordEntity(
-                        wordId = wordId,
-                        categoryId = target.categoryId,
-                        word = target.word,
-                        meaning = meaning,
-                        partOfSpeech = partOfSpeech,
-                        exampleSentence = example
-                    )
+            if (data.getBooleanExtra("deleted", false)) {
+                viewModel.deleteWord(wordId)
+            } else {
+                viewModel.updateWord(
+                    wordId = wordId,
+                    meaning = data.getStringExtra("meaning") ?: "",
+                    partOfSpeech = data.getStringExtra("partOfSpeech"),
+                    example = data.getStringExtra("example"),
+                    isFavorite = data.getBooleanExtra("isFavorite", false),
+                    memorizationStatus = data.getStringExtra("memorizationStatus") ?: "UNLEARNED"
                 )
             }
-            // 즐겨찾기/암기상태는 화면 표시용으로만 반영
-            allWords = allWords.map {
-                if (it.wordId == wordId) it.copy(
-                    meaning = meaning, partOfSpeech = partOfSpeech, exampleSentence = example,
-                    isFavorite = isFavorite, memorizationStatus = memorizationStatus
-                ) else it
-            }
-            updateFilteredWords()
         }
     }
 
-    fun deleteWord(wordId: Int) {
-        viewModelScope.launch {
-            allWords.firstOrNull { it.wordId == wordId }?.let { target ->
-                wordDao.deleteWord(
-                    WordEntity(
-                        wordId = wordId,
-                        categoryId = target.categoryId,
-                        word = target.word,
-                        meaning = target.meaning
-                    )
-                )
-            }
-            reload()
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        binding = ActivityWordListBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        // 시스템 바(상태바/네비바)에 콘텐츠가 겹치지 않도록 인셋만큼 패딩 적용
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val pad = (16 * resources.displayMetrics.density).toInt()
+            v.setPadding(pad, bars.top + pad, pad, bars.bottom + pad)
+            insets
+        }
+
+        initialCategoryId = intent.getIntExtra(EXTRA_CATEGORY_ID, ALL_CATEGORY_ID)
+
+        viewModel = ViewModelProvider(this, WordListViewModelFactory(this))[WordListViewModel::class.java]
+
+        setupRecyclerView()
+        setupCategoryChips()
+        setupSearch()
+        observeViewModel()
+
+        // 마이페이지 단어장 목록에서 넘어왔으면 해당 카테고리로 필터
+        viewModel.onCategorySelect(initialCategoryId)
+
+        binding.btnAddWord.setOnClickListener {
+            addWordLauncher.launch(Intent(this, WordAddActivity::class.java))
+        }
+
+        binding.btnBack.setOnClickListener {
+            finish()
         }
     }
 
-    private fun WordEntity.toListItem() = WordListItem(
-        wordId = wordId,
-        word = word,
-        meaning = meaning,
-        partOfSpeech = partOfSpeech,
-        exampleSentence = exampleSentence,
-        categoryId = categoryId,
-        isFavorite = false,
-        memorizationStatus = "UNLEARNED"
-    )
+    private fun setupRecyclerView() {
+        adapter = WordAdapter(
+            emptyList(),
+            onFavoriteClick = { wordId -> viewModel.toggleFavorite(wordId) },
+            onItemClick = { item ->
+                val intent = Intent(this, WordDetailActivity::class.java).apply {
+                    putExtra("wordId", item.wordId)
+                    putExtra("word", item.word)
+                    putExtra("meaning", item.meaning)
+                    putExtra("partOfSpeech", item.partOfSpeech)
+                    putExtra("example", item.exampleSentence)
+                    putExtra("isFavorite", item.isFavorite)
+                    putExtra("memorizationStatus", item.memorizationStatus)
+                }
+                wordDetailLauncher.launch(intent)
+            }
+        )
+        binding.rvWords.layoutManager = LinearLayoutManager(this)
+        binding.rvWords.adapter = adapter
+    }
+
+    private fun setupCategoryChips() {
+        viewModel.categories.observe(this) { categories ->
+            binding.chipGroupCategory.removeAllViews()
+            categories.forEach { category ->
+                val chip = Chip(this).apply {
+                    text = category.categoryName
+                    isCheckable = true
+                    isChecked = category.categoryId == initialCategoryId
+                    chipBackgroundColor = ContextCompat.getColorStateList(this@WordListActivity, R.color.chip_background_selector)
+                    setTextColor(ContextCompat.getColorStateList(this@WordListActivity, R.color.chip_text_selector))
+                    chipStrokeWidth = 1f
+                    setOnClickListener { viewModel.onCategorySelect(category.categoryId) }
+                }
+                binding.chipGroupCategory.addView(chip)
+            }
+        }
+    }
+
+    private fun setupSearch() {
+        binding.etSearch.addTextChangedListener { text ->
+            viewModel.onSearchQueryChange(text?.toString() ?: "")
+        }
+    }
+
+    private fun observeViewModel() {
+        viewModel.filteredWords.observe(this) { words ->
+            adapter.updateItems(words)
+        }
+    }
 }
