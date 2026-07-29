@@ -48,6 +48,21 @@
     </LinearLayout>
 
     <TextView
+        android:id="@+id/deckDelete"
+        android:layout_width="48dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="2dp"
+        android:gravity="center"
+        android:text="삭제"
+        android:textColor="@color/coral"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="단어장 삭제" />
+
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="›"

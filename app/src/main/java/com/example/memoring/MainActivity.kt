@@ -15,7 +15,6 @@ import com.example.memoring.data.CURRENT_USER_ID
 import com.example.memoring.data.repository.WordRepository
 import com.example.memoring.data.util.CsvHelper
 import com.example.memoring.ui.CategorySelectActivity
-import com.example.memoring.ui.FlashcardActivity
 import com.example.memoring.ui.LearningStats
 import com.example.memoring.ui.MemorizedActivity
 import com.example.memoring.ui.MyPageActivity
@@ -42,7 +41,13 @@ class MainActivity : AppCompatActivity() {
         fillMissingExamplesOnce()
 
         findViewById<LinearLayout>(R.id.cardFlashcard).setOnClickListener {
-            startActivity(Intent(this, FlashcardActivity::class.java))
+            startActivity(
+                Intent(this, CategorySelectActivity::class.java)
+                    .putExtra(
+                        CategorySelectActivity.EXTRA_MODE,
+                        CategorySelectActivity.MODE_FLASHCARD
+                    )
+            )
         }
         // 퀴즈는 카테고리 선택을 거쳐야 시작 (카테고리 선택 필수)
         val toQuiz = { startActivity(Intent(this, CategorySelectActivity::class.java)) }
@@ -114,14 +119,29 @@ class MainActivity : AppCompatActivity() {
     /** 홈 "복습이 필요한 단어" — 최근 복습 필요 단어 3개만 표시 */
     private fun buildReviewList() {
         val container = findViewById<LinearLayout>(R.id.reviewList)
-        container.removeAllViews()
         val inflater = LayoutInflater.from(this)
-        LearningStats.reviewWords(this).take(3).forEach { word ->
-            val item = inflater.inflate(R.layout.item_review_word, container, false)
-            item.findViewById<TextView>(R.id.reviewEng).text = word.word
-            item.findViewById<TextView>(R.id.reviewKor).text = word.meaning
-            item.findViewById<TextView>(R.id.reviewStatus).text = word.status
-            container.addView(item)
+        lifecycleScope.launch {
+            val validWords = AppDb.get(this@MainActivity)
+                .wordDao()
+                .getAllWords()
+                .map { it.word.trim().lowercase() }
+                .toSet()
+            val staleWords = LearningStats.reviewWords(this@MainActivity)
+                .map { it.word }
+                .filter { it.trim().lowercase() !in validWords }
+                .toSet()
+            LearningStats.removeWords(this@MainActivity, staleWords)
+
+            val reviews = LearningStats.reviewWords(this@MainActivity)
+            findViewById<TextView>(R.id.reviewNeededCount).text = reviews.size.toString()
+            container.removeAllViews()
+            reviews.take(3).forEach { word ->
+                val item = inflater.inflate(R.layout.item_review_word, container, false)
+                item.findViewById<TextView>(R.id.reviewEng).text = word.word
+                item.findViewById<TextView>(R.id.reviewKor).text = word.meaning
+                item.findViewById<TextView>(R.id.reviewStatus).text = word.status
+                container.addView(item)
+            }
         }
     }
 }

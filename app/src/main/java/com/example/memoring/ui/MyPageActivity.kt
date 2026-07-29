@@ -10,6 +10,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -19,9 +20,11 @@ import com.example.memoring.R
 import com.example.memoring.WordListActivity
 import com.example.memoring.data.AppDb
 import com.example.memoring.data.CURRENT_USER_ID
+import com.example.memoring.data.entity.CategoryEntity
 import com.example.memoring.data.entity.WordEntity
 import com.example.memoring.data.repository.WordRepository
 import com.example.memoring.data.util.CsvHelper
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -171,6 +174,9 @@ class MyPageActivity : AppCompatActivity() {
                 icon.backgroundTintList = getColorStateList(toneColors[tones[i % tones.size]] ?: R.color.coral)
                 item.findViewById<TextView>(R.id.deckName).text = cat.categoryName
                 item.findViewById<TextView>(R.id.deckMeta).text = "${"%,d".format(counts[i])}개 단어"
+                item.findViewById<TextView>(R.id.deckDelete).setOnClickListener {
+                    confirmDeleteDeck(cat, counts[i])
+                }
                 // 단어장 항목 클릭 → 해당 카테고리 단어 목록으로 진입
                 item.setOnClickListener {
                     startActivity(
@@ -183,25 +189,81 @@ class MyPageActivity : AppCompatActivity() {
         }
     }
 
-    /** 선택한 CSV를 파싱해 "내 단어장" 카테고리로 DB에 적재 */
+    private fun confirmDeleteDeck(
+        category: CategoryEntity,
+        wordCount: Int
+    ) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("단어장 삭제")
+            .setMessage(
+                "'${category.categoryName}' 단어장과 단어 ${wordCount}개를 삭제할까요?\n" +
+                    "삭제한 내용은 복구할 수 없습니다."
+            )
+            .setNegativeButton("취소", null)
+            .setPositiveButton("삭제") { _, _ ->
+                lifecycleScope.launch {
+                    val db = AppDb.get(this@MyPageActivity)
+                    val deletedWords = db.wordDao()
+                        .getWordsByCategory(category.categoryId)
+                        .map { it.word.trim().lowercase() }
+                        .toSet()
+                    db.categoryDao().deleteCategory(category)
+
+                    val remainingWords = db.wordDao()
+                        .getAllWords()
+                        .map { it.word.trim().lowercase() }
+                        .toSet()
+                    LearningStats.removeWords(
+                        this@MyPageActivity,
+                        deletedWords - remainingWords
+                    )
+                    renderDecks()
+                    refreshStats()
+                    Toast.makeText(
+                        this@MyPageActivity,
+                        "${category.categoryName} 단어장을 삭제했습니다.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+            .show()
+    }
+
+    /** 선택한 CSV 파일 하나를 같은 이름의 단어장으로 만들어 DB에 적재 */
     private fun importCsv(uri: Uri) {
         val name = displayName(uri)
-        if (name == null || !name.lowercase().endsWith(".csv")) return
+        if (name == null || !name.lowercase().endsWith(".csv")) {
+            Toast.makeText(this, "CSV 파일만 업로드할 수 있습니다.", Toast.LENGTH_SHORT).show()
+            return
+        }
 
         lifecycleScope.launch {
             val rows = runCatching {
                 contentResolver.openInputStream(uri)?.use { CsvHelper.parseCsvStream(it) }
             }.getOrNull().orEmpty()
-            if (rows.isEmpty()) return@launch
+            if (rows.isEmpty()) {
+                Toast.makeText(
+                    this@MyPageActivity,
+                    "CSV에서 단어를 찾지 못했습니다.",
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@launch
+            }
 
             val db = AppDb.get(this@MyPageActivity)
-            // "내 단어장" 카테고리 찾기 (없으면 첫 카테고리 fallback)
+            val deckName = name.substringBeforeLast(".").trim().ifEmpty { "새 단어장" }
             val categories = db.categoryDao().getCategoriesByUserId(CURRENT_USER_ID)
-            val myVocabId = categories.firstOrNull { it.categoryName == "내 단어장" }?.categoryId
-                ?: categories.firstOrNull()?.categoryId ?: return@launch
+            val deckId = categories
+                .firstOrNull { it.categoryName.equals(deckName, ignoreCase = true) }
+                ?.categoryId
+                ?: db.categoryDao().insertCategory(
+                    CategoryEntity(
+                        userId = CURRENT_USER_ID,
+                        categoryName = deckName
+                    )
+                ).toInt()
 
-            // 이미 내 단어장에 있는 단어(소문자 기준)
-            val existing = db.wordDao().getWordsByCategory(myVocabId)
+            val existing = db.wordDao().getWordsByCategory(deckId)
                 .map { it.word.trim().lowercase() }
                 .toMutableSet()
 
@@ -210,18 +272,23 @@ class MyPageActivity : AppCompatActivity() {
                 // CSV 내 중복 + 기존 DB 중복 모두 제거
                 if (key.isEmpty() || !existing.add(key)) return@mapNotNull null
                 WordEntity(
-                    categoryId = myVocabId,
+                    categoryId = deckId,
                     word = word.trim(),
                     meaning = meaning,
                     partOfSpeech = pos?.ifBlank { null }
                 )
             }
             if (words.isNotEmpty()) db.wordDao().insertWords(words)
-            renderDecks() // 내 단어장 개수 갱신
+            renderDecks()
+            Toast.makeText(
+                this@MyPageActivity,
+                "$deckName 단어장에 ${words.size}개 단어를 추가했습니다.",
+                Toast.LENGTH_SHORT
+            ).show()
 
             // 예문 자동 채우기 (FreeDictionary) — 뒤이어 배경에서 진행
             runCatching {
-                WordRepository(db.wordDao(), CsvHelper).fetchAndFillExamplesForCategory(myVocabId)
+                WordRepository(db.wordDao(), CsvHelper).fetchAndFillExamplesForCategory(deckId)
             }
         }
     }

@@ -15,9 +15,11 @@ import kotlinx.coroutines.launch
 import com.example.memoring.data.CategoryItem
 import com.example.memoring.data.ALL_CATEGORY_ID
 import com.example.memoring.data.CURRENT_USER_ID
+import com.example.memoring.ui.LearningStats
 
 class WordListViewModel(context: Context) : ViewModel() {
 
+    private val appContext = context.applicationContext
     private val db = AppDb.get(context)
     private val repository = MemoringRepository(db, ClockDateProvider())
     private val wordRepository = WordRepository(db.wordDao(), CsvHelper)
@@ -74,6 +76,10 @@ class WordListViewModel(context: Context) : ViewModel() {
         applyFilter()
     }
 
+    fun refreshWords() {
+        loadWords()
+    }
+
     fun toggleFavorite(wordId: Int) {
         val word = allWords.find { it.wordId == wordId } ?: return
         viewModelScope.launch {
@@ -94,6 +100,12 @@ class WordListViewModel(context: Context) : ViewModel() {
         val word = allWords.find { it.wordId == wordId } ?: return
         viewModelScope.launch {
             repository.deleteWordById(CURRENT_USER_ID, wordId, word.categoryId)
+            val stillExists = db.wordDao().getAllWords().any {
+                it.word.equals(word.word, ignoreCase = true)
+            }
+            if (!stillExists) {
+                LearningStats.removeWords(appContext, setOf(word.word))
+            }
             loadWords()
         }
     }

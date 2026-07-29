@@ -153,6 +153,25 @@ object LearningStats {
         p.edit().putStringSet(KEY_MEMORIZED, updated).apply()
     }
 
+    /** DB에서 완전히 삭제된 단어를 암기 완료 및 복습 필요 기록에서도 제거한다. */
+    fun removeWords(context: Context, words: Set<String>) {
+        if (words.isEmpty()) return
+        val normalized = words.map { it.trim().lowercase() }.toSet()
+        val p = prefs(context)
+
+        val memorized = (p.getStringSet(KEY_MEMORIZED, emptySet()) ?: emptySet())
+            .filterNot { it.substringBefore(SEP).trim().lowercase() in normalized }
+            .toSet()
+        val review = reviewWords(context)
+            .filterNot { it.word.trim().lowercase() in normalized }
+            .joinToString(REC) { it.word + SEP + it.meaning + SEP + it.status }
+
+        p.edit()
+            .putStringSet(KEY_MEMORIZED, memorized)
+            .putString(KEY_REVIEW, review)
+            .apply()
+    }
+
     /** 복습 필요 단어 목록 (최근순: 가장 최근이 맨 앞) */
     fun reviewWords(context: Context): List<ReviewWord> {
         val raw = prefs(context).getString(KEY_REVIEW, null)

@@ -38,13 +38,7 @@ class WordListActivity : AppCompatActivity() {
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            val data = result.data
-            val word = data?.getStringExtra("word") ?: return@registerForActivityResult
-            val meaning = data.getStringExtra("meaning")
-            val categoryId = data.getIntExtra("categoryId", 1)
-
-            // 뜻이 비어 있으면 번역/사전 API가 자동으로 채워 DB에 저장
-            viewModel.addWordViaApi(word, meaning?.ifBlank { null }, categoryId)
+            viewModel.refreshWords()
         }
     }
 

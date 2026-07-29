@@ -25,7 +25,11 @@ object AppDb {
                 appCtx,
                 AppDatabase::class.java,
                 "memoring.db"
-            ).addCallback(SeedCallback(appCtx)).build().also { instance = it }
+            )
+                .addMigrations(MIGRATION_1_2)
+                .addCallback(SeedCallback(appCtx))
+                .build()
+                .also { instance = it }
         }
     }
 

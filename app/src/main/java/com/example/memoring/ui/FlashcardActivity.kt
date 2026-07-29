@@ -11,11 +11,21 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.example.memoring.R
+import com.example.memoring.data.AppDb
+import com.example.memoring.data.entity.WordEntity
+import kotlinx.coroutines.launch
 
 class FlashcardActivity : AppCompatActivity() {
 
-    private val cards = DummyData.flashcards
+    companion object {
+        const val EXTRA_CATEGORY_ID = "categoryId"
+        const val EXTRA_CATEGORY_NAME = "categoryName"
+    }
+
+    private var cards: List<WordEntity> = emptyList()
+    private var categoryName = ""
     private var index = 0
     private var showingFront = true
     private var flipping = false
@@ -29,6 +39,8 @@ class FlashcardActivity : AppCompatActivity() {
     private lateinit var backTag: TextView
     private lateinit var backWordSmall: TextView
     private lateinit var backMeaning: TextView
+    private lateinit var learningContent: LinearLayout
+    private lateinit var completionContent: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,13 +55,16 @@ class FlashcardActivity : AppCompatActivity() {
         backTag = findViewById(R.id.backTag)
         backWordSmall = findViewById(R.id.backWordSmall)
         backMeaning = findViewById(R.id.backMeaning)
+        learningContent = findViewById(R.id.learningContent)
+        completionContent = findViewById(R.id.completionContent)
+        container.visibility = View.INVISIBLE
+        categoryName = intent.getStringExtra(EXTRA_CATEGORY_NAME).orEmpty()
+        findViewById<TextView>(R.id.toolbarTitle).text = categoryName
 
         // 3D 회전 시 원근감이 자연스럽도록 카메라 거리 확대
         val distance = 8000 * resources.displayMetrics.density
         cardFront.cameraDistance = distance
         cardBack.cameraDistance = distance
-
-        bindCard()
 
         findViewById<TextView>(R.id.btnBack).setOnClickListener { finish() }
         container.setOnClickListener { flip() }
@@ -57,13 +72,34 @@ class FlashcardActivity : AppCompatActivity() {
         findViewById<LinearLayout>(R.id.moodKnow).setOnClickListener { next("외웠어요") }
         findViewById<LinearLayout>(R.id.moodUnsure).setOnClickListener { next("헷갈려요") }
         findViewById<LinearLayout>(R.id.moodNo).setOnClickListener { next("모르겠어요") }
+        findViewById<TextView>(R.id.btnRestartFlashcards).setOnClickListener {
+            restartLearning()
+        }
+        findViewById<TextView>(R.id.btnExitFlashcards).setOnClickListener { finish() }
+
+        val categoryId = intent.getIntExtra(EXTRA_CATEGORY_ID, -1)
+        if (categoryId <= 0) {
+            finish()
+            return
+        }
+        lifecycleScope.launch {
+            cards = AppDb.get(this@FlashcardActivity)
+                .wordDao()
+                .getWordsByCategory(categoryId)
+            if (cards.isEmpty()) {
+                finish()
+                return@launch
+            }
+            container.visibility = View.VISIBLE
+            bindCard()
+        }
     }
 
     private fun bindCard() {
         val card = cards[index]
-        frontTag.text = card.category
+        frontTag.text = categoryName
         frontWord.text = card.word
-        backTag.text = card.category
+        backTag.text = categoryName
         backWordSmall.text = card.word
         backMeaning.text = card.meaning
         progress.text = "${index + 1} / ${cards.size}"
@@ -77,7 +113,7 @@ class FlashcardActivity : AppCompatActivity() {
 
     /** 앞면↔뒷면 Y축 회전 뒤집기 애니메이션 */
     private fun flip() {
-        if (flipping) return
+        if (flipping || cards.isEmpty()) return
         flipping = true
 
         val out = ObjectAnimator.ofFloat(container, "rotationY", 0f, 90f).apply {
@@ -107,6 +143,7 @@ class FlashcardActivity : AppCompatActivity() {
 
     /** 다음 카드로 이동 (마지막 카드까지 끝나면 화면 종료) */
     private fun next(mood: String) {
+        if (cards.isEmpty()) return
         val card = cards[index]
         // 카드 1장 평가 = 오늘 학습량 1건
         LearningStats.recordStudied(this)
@@ -117,11 +154,24 @@ class FlashcardActivity : AppCompatActivity() {
             "헷갈려요", "모르겠어요" -> LearningStats.addReviewWord(this, card.word, card.meaning, mood)
         }
         if (index >= cards.size - 1) {
-            // 마지막 카드까지 봤으면 처음으로 돌아가지 않고 종료
-            finish()
+            showCompletion()
             return
         }
         index++
+        bindCard()
+    }
+
+    private fun showCompletion() {
+        findViewById<TextView>(R.id.completionSummary).text =
+            "$categoryName 단어 ${cards.size}개를 모두 학습했어요."
+        learningContent.visibility = View.GONE
+        completionContent.visibility = View.VISIBLE
+    }
+
+    private fun restartLearning() {
+        index = 0
+        completionContent.visibility = View.GONE
+        learningContent.visibility = View.VISIBLE
         bindCard()
     }
 }

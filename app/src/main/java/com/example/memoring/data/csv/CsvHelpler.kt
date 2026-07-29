@@ -5,7 +5,10 @@ import android.util.Log
 import com.example.memoring.data.entity.WordEntity
 import java.io.BufferedReader
 import java.io.InputStream
-import java.io.InputStreamReader
+import java.io.StringReader
+import java.nio.ByteBuffer
+import java.nio.charset.CodingErrorAction
+import java.nio.charset.StandardCharsets
 
 object CsvHelper {
     private var assetDictionary: Map<String, String>? = null
@@ -44,7 +47,7 @@ object CsvHelper {
         val wordList = mutableListOf<Triple<String, String, String?>>()
 
         try {
-            val reader = BufferedReader(InputStreamReader(inputStream, "EUC-KR"))
+            val reader = BufferedReader(StringReader(decodeCsv(inputStream.readBytes())))
 
             var isHeader = true
             var line: String?
@@ -77,5 +80,33 @@ object CsvHelper {
             Log.e("CSV_HELPER", "CSV 파싱 중 에러 발생: ${e.message}", e)
         }
         return wordList
+    }
+
+    /**
+     * Most user-created CSV files are UTF-8, while some Korean spreadsheet
+     * programs still export EUC-KR. Decode strict UTF-8 first so malformed byte
+     * sequences fall back to EUC-KR instead of producing replacement characters.
+     */
+    internal fun decodeCsv(bytes: ByteArray): String {
+        val utf8Bytes = if (
+            bytes.size >= 3 &&
+            bytes[0] == 0xEF.toByte() &&
+            bytes[1] == 0xBB.toByte() &&
+            bytes[2] == 0xBF.toByte()
+        ) {
+            bytes.copyOfRange(3, bytes.size)
+        } else {
+            bytes
+        }
+
+        return runCatching {
+            StandardCharsets.UTF_8.newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT)
+                .decode(ByteBuffer.wrap(utf8Bytes))
+                .toString()
+        }.getOrElse {
+            String(bytes, charset("EUC-KR")).removePrefix("\uFEFF")
+        }
     }
 }

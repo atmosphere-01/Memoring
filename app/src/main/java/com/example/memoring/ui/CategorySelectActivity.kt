@@ -20,9 +20,25 @@ import kotlinx.coroutines.launch
  */
 class CategorySelectActivity : AppCompatActivity() {
 
+    companion object {
+        const val EXTRA_MODE = "mode"
+        const val MODE_QUIZ = "quiz"
+        const val MODE_FLASHCARD = "flashcard"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_category_select)
+
+        val mode = intent.getStringExtra(EXTRA_MODE) ?: MODE_QUIZ
+        val isFlashcard = mode == MODE_FLASHCARD
+        findViewById<TextView>(R.id.categorySelectTitle).text =
+            if (isFlashcard) "플래시카드" else "퀴즈"
+        findViewById<TextView>(R.id.categorySelectPrompt).text =
+            if (isFlashcard) "어떤 단어장을 학습할까요?" else "어떤 카테고리로 풀어볼까요?"
+        findViewById<TextView>(R.id.categorySelectSubtitle).text =
+            if (isFlashcard) "단어장을 선택하면 플래시카드가 시작돼요"
+            else "카테고리를 선택하면 퀴즈가 시작돼요"
 
         findViewById<TextView>(R.id.btnBack).setOnClickListener { finish() }
 
@@ -46,22 +62,27 @@ class CategorySelectActivity : AppCompatActivity() {
                 item.findViewById<TextView>(R.id.categoryChevron).text = if (empty) "" else "›"
 
                 item.setOnClickListener {
-                    startQuiz(category.categoryId, count, category.categoryName)
+                    startLearning(mode, category.categoryId, count, category.categoryName)
                 }
                 list.addView(item)
             }
         }
     }
 
-    /** 카테고리 검증 후 퀴즈 시작. 검증 실패 시 시작을 거부한다. */
-    private fun startQuiz(categoryId: Int, wordCount: Int, name: String) {
+    /** 카테고리 검증 후 선택한 학습 화면을 시작한다. */
+    private fun startLearning(mode: String, categoryId: Int, wordCount: Int, name: String) {
         // categoryId 가 0 이하이거나 단어가 없으면 시작 거부
         if (categoryId <= 0 || wordCount <= 0) return
 
-        startActivity(
+        val target = if (mode == MODE_FLASHCARD) {
+            Intent(this, FlashcardActivity::class.java)
+                .putExtra(FlashcardActivity.EXTRA_CATEGORY_ID, categoryId)
+                .putExtra(FlashcardActivity.EXTRA_CATEGORY_NAME, name)
+        } else {
             Intent(this, QuizActivity::class.java)
                 .putExtra(QuizActivity.EXTRA_CATEGORY_ID, categoryId)
                 .putExtra(QuizActivity.EXTRA_CATEGORY_NAME, name)
-        )
+        }
+        startActivity(target)
     }
 }
