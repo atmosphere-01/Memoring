@@ -39,6 +39,7 @@
 
     </RelativeLayout>
 
+
     <EditText
         android:id="@+id/et_search"
         android:layout_width="match_parent"

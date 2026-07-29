@@ -74,8 +74,10 @@
 
         <TextView
             android:id="@+id/quizWord"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:paddingHorizontal="20dp"
+            android:gravity="center"
             android:text="apple"
             android:fontFamily="serif"
             android:textStyle="bold"
@@ -83,9 +85,10 @@
             android:textSize="38sp" />
 
         <TextView
+            android:id="@+id/quizQuestion"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="12dp"
             android:text="이 단어의 뜻으로 알맞은 것은?"
             android:textColor="@color/ink_soft"
             android:textSize="14sp" />

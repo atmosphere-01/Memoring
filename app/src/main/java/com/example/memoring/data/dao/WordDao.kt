@@ -37,6 +37,14 @@ interface WordDao {
     @Query("SELECT * FROM words WHERE categoryId = :categoryId")
     suspend fun getWordsByCategory(categoryId: Int): List<WordEntity>
 
+    // 전체 단어 조회 (단어 목록 화면용)
+    @Query("SELECT * FROM words ORDER BY wordId")
+    suspend fun getAllWords(): List<WordEntity>
+
+    // 전체 등록 단어 수 (홈 '전체 단어')
+    @Query("SELECT COUNT(*) FROM words")
+    suspend fun countAllWords(): Int
+
     // 단어 삭제
     @Delete
     suspend fun deleteWord(word: WordEntity)
