@@ -101,6 +101,10 @@ class WordListActivity : AppCompatActivity() {
         binding.btnAddWord.setOnClickListener {
             addWordLauncher.launch(Intent(this, WordAddActivity::class.java))
         }
+
+        binding.btnBack.setOnClickListener {
+            finish()
+        }
     }
 
     private fun setupRecyclerView() {

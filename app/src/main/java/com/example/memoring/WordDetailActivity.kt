@@ -5,13 +5,15 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.example.memoring.databinding.ActivityWordDetailBinding
-
+import com.example.memoring.tts.EnglishTtsManager
 class WordDetailActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityWordDetailBinding
     private var wordId = -1
     private var isFavorite = false
     private var currentStatus = "UNLEARNED"
+
+    private lateinit var ttsManager: EnglishTtsManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,6 +24,12 @@ class WordDetailActivity : AppCompatActivity() {
         val word = intent.getStringExtra("word") ?: ""
         isFavorite = intent.getBooleanExtra("isFavorite", false)
         currentStatus = intent.getStringExtra("memorizationStatus") ?: "UNLEARNED"
+
+        ttsManager = EnglishTtsManager(this)
+
+        binding.btnSpeak.setOnClickListener {
+            ttsManager.speakWord(word)
+        }
 
         binding.tvWord.text = word
         binding.etMeaning.setText(intent.getStringExtra("meaning") ?: "")
@@ -90,5 +98,10 @@ class WordDetailActivity : AppCompatActivity() {
         binding.statusKnown.setBackgroundResource(
             if (currentStatus == "KNOWN") R.drawable.bg_rounded_pill_selected else R.drawable.bg_rounded_pill
         )
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        ttsManager.release()
     }
 }
