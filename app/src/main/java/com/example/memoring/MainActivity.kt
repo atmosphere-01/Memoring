@@ -49,6 +49,10 @@ class MainActivity : AppCompatActivity() {
         findViewById<LinearLayout>(R.id.navMy).setOnClickListener {
             startActivity(Intent(this, MyPageActivity::class.java))
         }
+
+        findViewById<LinearLayout>(R.id.navWord).setOnClickListener {
+            startActivity(Intent(this, WordListActivity::class.java))
+        }
     }
 
     override fun onResume() {
