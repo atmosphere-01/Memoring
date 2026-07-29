@@ -34,9 +34,21 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:fontFamily="serif"
                 android:textSize="26sp"
                 android:textStyle="bold"
                 android:textColor="@color/ink" />
+
+            <TextView
+                android:id="@+id/btn_speak"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🔊"
+                android:textSize="22sp"
+                android:padding="6dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginEnd="8dp" />
 
             <TextView
                 android:id="@+id/tv_favorite"
@@ -166,8 +178,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="삭제"
-            android:background="@drawable/bg_rounded_pill"
-            android:textColor="@color/rust" />
+            android:background="@drawable/bg_rounded_button"
+            android:textColor="@color/paper" />
 
     </LinearLayout>
 </ScrollView>
