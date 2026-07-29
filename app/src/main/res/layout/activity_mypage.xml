@@ -222,9 +222,10 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:orientation="horizontal"
-                    android:gravity="center"
+                    android:gravity="center_vertical|start"
                     android:background="@drawable/bg_white_card"
-                    android:paddingVertical="16dp">
+                    android:paddingVertical="16dp"
+                    android:paddingStart="18dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -265,9 +266,10 @@
                     android:layout_weight="1"
                     android:layout_marginStart="10dp"
                     android:orientation="horizontal"
-                    android:gravity="center"
+                    android:gravity="center_vertical|start"
                     android:background="@drawable/bg_white_card"
-                    android:paddingVertical="16dp">
+                    android:paddingVertical="16dp"
+                    android:paddingStart="18dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -308,9 +310,10 @@
                     android:layout_weight="1"
                     android:layout_marginStart="10dp"
                     android:orientation="horizontal"
-                    android:gravity="center"
+                    android:gravity="center_vertical|start"
                     android:background="@drawable/bg_white_card"
-                    android:paddingVertical="16dp">
+                    android:paddingVertical="16dp"
+                    android:paddingStart="18dp">
 
                     <TextView
                         android:layout_width="wrap_content"
