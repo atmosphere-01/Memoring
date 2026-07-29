@@ -168,6 +168,21 @@ class MemoringRepository(
         val userWord = db.userWordDao().get(userId, wordId)
         if (userWord != null) {
             db.userWordDao().upsertUserWord(userWord.copy(isFavorite = isFavorite))
+        } else {
+            db.userWordDao().insert(
+                UserWordEntity(userId = userId, wordId = wordId, isFavorite = isFavorite)
+            )
+        }
+    }
+
+    suspend fun updateMemorizationStatus(userId: Int, wordId: Int, status: String) {
+        val userWord = db.userWordDao().get(userId, wordId)
+        if (userWord != null) {
+            db.userWordDao().updateStatus(userId, wordId, status)
+        } else {
+            db.userWordDao().insert(
+                UserWordEntity(userId = userId, wordId = wordId, memorizationStatus = status)
+            )
         }
     }
 
@@ -190,9 +205,7 @@ class MemoringRepository(
         db.wordDao().updateWord(updated)
     }
 
-    suspend fun updateMemorizationStatus(userId: Int, wordId: Int, status: String) {
-        db.userWordDao().updateStatus(userId, wordId, status)
-    }
+
 
 
 }
